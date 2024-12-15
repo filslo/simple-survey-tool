@@ -1,0 +1,21 @@
+### Maven ###
+pom.xml           text eol=lf encoding=utf-8
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.properties text eol=lf encoding=utf-8
+mvnw                                  text eol=lf encoding=utf-8
+mvnw.cmd                              text eol=crlf
+
+### Git ###
+.gitignore        text eol=lf encoding=utf-8
+.gitattributes    text eol=lf encoding=utf-8
+.gitkeep          text eol=lf encoding=utf-8
+
+
+### Backend ###
+
+## Java ##
+*.java       text eol=lf encoding=utf-8
+*.properties text eol=lf encoding=utf-8
+*.sql        text eol=lf encoding=utf-8
+*.xml        text eol=lf encoding=utf-8
