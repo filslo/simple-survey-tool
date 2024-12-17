@@ -9,11 +9,11 @@ const routes = [
         path: '/',
         component: () => import('./components/Surveys.vue')
     },
- /*   {
+    {
         name : 'survey',
-        path: '/surveys/:id”',//component: Album },
+        path: '/surveys/:id',
         component: () => import('./components/Survey.vue')
-    }*/
+    }
 ]
 
 const router = createRouter({

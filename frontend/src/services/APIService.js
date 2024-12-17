@@ -51,10 +51,10 @@ export default class APIService {
                 .then(response => {
                     console.debug(`Fetching survey: ${surveyId}`);
 
-                    if (response.data.album && response.data.album.length > 0) {
-                        return response.data.album[0];
+                    if (response.data) {
+                        return response.data;
                     } else {
-                        console.warn(`Album not found: ${albumId}`);
+                        console.warn(`Survey not found: ${surveyId}`);
                         return undefined;
                     }
                 })

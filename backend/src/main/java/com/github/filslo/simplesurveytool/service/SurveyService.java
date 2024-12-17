@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.filslo.simplesurveytool.data.entity.Survey;
 import com.github.filslo.simplesurveytool.data.repository.SurveyRepository;
 import com.github.filslo.simplesurveytool.dto.SurveyDTO;
+import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,5 +30,14 @@ public class SurveyService {
         List<Survey> surveys = this.surveyRepository.findAll();
         return this.objectMapper.convertValue(surveys, new TypeReference<>() {});
 
+    }
+
+    public SurveyDTO getSurvey(Long id) {
+        return this.surveyRepository.findById(id)
+
+                .map(survey ->
+                    this.objectMapper.convertValue(survey, SurveyDTO.class)
+                )
+                .orElseThrow(NoResultException::new);
     }
 }

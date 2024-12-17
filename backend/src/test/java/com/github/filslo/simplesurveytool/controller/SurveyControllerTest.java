@@ -3,6 +3,7 @@ import com.github.filslo.simplesurveytool.SimpleSurveyToolApplication;
 import com.github.filslo.simplesurveytool.dto.SurveyDTO;
 import com.github.filslo.simplesurveytool.service.SurveyService;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
+import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +19,12 @@ import java.util.*;
 
 import static io.restassured.http.ContentType.JSON;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(
@@ -72,6 +76,56 @@ class SurveyControllerTest {
 
         assertThat(surveyDTOS).containsExactlyElementsOf(surveyDT0s);
 
+        verify(this.surveyService).getAllSurveys();
+
+    }
+
+
+    @Test
+    void test_get_surveybyid_returns_existing_survey_from_service_with_status_OK() {
+
+        //GIVEN
+        long surveyId = 10L;
+        String surveyName = "Survey1";
+        SurveyDTO surveyDT0 = new SurveyDTO(surveyId, surveyName, new ArrayList<>());
+
+        when(this.surveyService.getSurvey(surveyId)).thenReturn(surveyDT0);
+
+        // WHEN
+        given().log().ifValidationFails()
+            .accept(JSON)
+
+            .when()
+            .get("/api/surveys/{id}", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_OK)
+            .assertThat()
+            .body("id", equalTo(10))
+            .body("name", equalTo(surveyName))        ;
+
+        verify(this.surveyService).getSurvey(surveyId);
+    }
+
+    @Test
+    void test_get_surveybyid_when_survey_does_not_exist_with_status_NO_FOUND() {
+
+        //GIVEN
+        long surveyId = 10000L;
+
+        when(this.surveyService.getSurvey(surveyId)).thenThrow(NoResultException.class);
+
+        // WHEN
+        given().log().ifValidationFails()
+            .accept(JSON)
+
+            .when()
+            .get("/api/surveys/{id}", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_NOT_FOUND);
+
+        verify(this.surveyService).getSurvey(surveyId);
     }
 
 }

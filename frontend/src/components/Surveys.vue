@@ -4,9 +4,9 @@
 
         <ul>
             <li v-for="survey in surveys" :key="survey.id" class="no-bullets">
-                <!--<router-link :to="{ name: 'survey', params: { id: survey.id } }">-->
+                <router-link :to="{ name: 'survey', params: { id: survey.id } }">
                     {{ survey.name }}
-               <!-- </router-link>-->
+                </router-link>
             </li>
         </ul>
 

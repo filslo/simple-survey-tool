@@ -1,16 +1,19 @@
 package com.github.filslo.simplesurveytool.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.filslo.simplesurveytool.data.entity.Survey;
+import com.github.filslo.simplesurveytool.data.entity.*;
 import com.github.filslo.simplesurveytool.data.repository.SurveyRepository;
-import com.github.filslo.simplesurveytool.dto.SurveyDTO;
+import com.github.filslo.simplesurveytool.dto.*;
+import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 class SurveyServiceTest {
 
@@ -57,4 +60,40 @@ class SurveyServiceTest {
         //THEN
         assertThat(allSurveys).containsAll(expectedSurveyDTOs);
     }
+
+    @Test
+    void test_getSurvey_with_unknown_surveyId_should_throw_noResultException() {
+        //GIVEN
+        Long surveyId = 199L;
+
+        when(this.surveyRepository.findById(surveyId)).thenReturn(Optional.empty());
+
+        //WHEN
+        assertThatThrownBy(() -> {
+            this.surveyService.getSurvey(surveyId);
+
+        //THEN
+        }).isInstanceOf(NoResultException.class);
+
+    }
+
+    @Test
+    void test_getSurvey_with_known_surveyId_should_return_expected_surveyDTO() {
+        //GIVEN
+        Long surveyId = 199L;
+
+        String surveyName = "Test Survey";
+        when(this.surveyRepository.findById(surveyId))
+            .thenReturn(
+                Optional.of(new Survey(surveyId, surveyName, null))
+        );
+
+        //WHEN
+        SurveyDTO survey = this.surveyService.getSurvey(surveyId);
+
+        //THEN
+        assertThat(survey.getId()).isEqualTo(surveyId);
+        assertThat(survey.getName()).isEqualTo(surveyName);
+    }
+
 }
