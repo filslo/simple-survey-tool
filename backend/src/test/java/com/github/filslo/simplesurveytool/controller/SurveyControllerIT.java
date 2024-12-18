@@ -1,6 +1,7 @@
 package com.github.filslo.simplesurveytool.controller;
 
 import com.github.filslo.simplesurveytool.SimpleSurveyToolApplication;
+import com.github.filslo.simplesurveytool.dto.AnswerDTO;
 import com.github.filslo.simplesurveytool.dto.SurveyDTO;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,15 +11,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static io.restassured.http.ContentType.JSON;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
@@ -35,6 +38,11 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
     @Sql(value = "classpath:db/data-h2.sql", executionPhase = BEFORE_TEST_METHOD),
 })
 class SurveyControllerIT {
+
+    private static final long SURVEY1_ID = 10L;
+
+    private static final int SURVEY2_ID = 20;
+    private static final String SURVEY2_NAME = "Survey2";
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,8 +74,8 @@ class SurveyControllerIT {
     void test_get_a_survey_should_return_a_survey_including_all_questions_with_status_OK() {
 
         //GIVEN
-        int surveyId = 20;
-        String expectedSurveyName = "Survey2";
+        int surveyId = SURVEY2_ID;
+        String expectedSurveyName = SURVEY2_NAME;
 
         // WHEN
         SurveyDTO surveyDTO = given().log().ifValidationFails()
@@ -109,4 +117,50 @@ class SurveyControllerIT {
             .statusCode(SC_NOT_FOUND);
 
     }
+
+    @Test
+    void test_submitting_answers_should_return_a_404_status_when_survey_does_not_exist() {
+
+        //GIVEN
+        long surveyId = 1001L;
+
+
+        // WHEN
+        List<AnswerDTO> answers = List.of(new AnswerDTO());
+        given().log().ifValidationFails()
+            .accept(JSON)
+            .body(answers)
+            .contentType(MediaType.APPLICATION_JSON)
+
+            .when()
+            .post("/api/surveys/{id}/answers", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_NOT_FOUND);
+
+    }
+
+    @Test
+    void should_return_NO_CONTENT_when_submitting_answer() {
+
+        //GIVEN
+
+        // WHEN
+        List<AnswerDTO> answers = List.of(
+            new AnswerDTO( 2L,  3),
+            new AnswerDTO( 3L,  5)
+        );
+        given().log().ifValidationFails()
+            .accept(JSON)
+            .body(answers)
+            .contentType(MediaType.APPLICATION_JSON)
+
+            .when()
+            .post("/api/surveys/{id}/answers", SURVEY1_ID)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_NO_CONTENT);
+
+    }
+
 }

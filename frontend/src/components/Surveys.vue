@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="surveys">
         <h2>Surveys</h2>
 
         <ul>
@@ -10,6 +10,10 @@
             </li>
         </ul>
 
+    </div>
+
+    <div v-if="!surveys">
+        No surveys available
     </div>
 </template>
 

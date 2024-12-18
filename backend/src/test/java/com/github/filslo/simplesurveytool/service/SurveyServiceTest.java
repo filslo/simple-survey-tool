@@ -2,14 +2,13 @@ package com.github.filslo.simplesurveytool.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.filslo.simplesurveytool.data.entity.*;
-import com.github.filslo.simplesurveytool.data.repository.SurveyRepository;
+import com.github.filslo.simplesurveytool.data.repository.*;
 import com.github.filslo.simplesurveytool.dto.*;
 import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -22,6 +21,12 @@ class SurveyServiceTest {
     @Mock
     private SurveyRepository surveyRepository;
 
+    @Mock
+    private RatingRepository ratingRepository;
+
+    @Mock
+    private QuestionRepository questionRepository;
+    
     @Spy
     private ObjectMapper objectMapper;
 
@@ -30,7 +35,12 @@ class SurveyServiceTest {
     @BeforeEach
     void setUp() {
         autoCloseable = MockitoAnnotations.openMocks(this);
-        surveyService = new SurveyService(this.objectMapper, this.surveyRepository);
+        surveyService = new SurveyService(
+            this.objectMapper,
+            this.surveyRepository,
+            this.ratingRepository,
+            this.questionRepository
+        );
     }
 
     @AfterEach
@@ -58,7 +68,7 @@ class SurveyServiceTest {
         List<SurveyDTO> allSurveys = this.surveyService.getAllSurveys();
 
         //THEN
-        assertThat(allSurveys).containsAll(expectedSurveyDTOs);
+        assertThat(allSurveys).isEqualTo(expectedSurveyDTOs);
     }
 
     @Test
@@ -94,6 +104,49 @@ class SurveyServiceTest {
         //THEN
         assertThat(survey.getId()).isEqualTo(surveyId);
         assertThat(survey.getName()).isEqualTo(surveyName);
+    }
+
+    @Test
+    void test_storeAnswers_with_unknown_surveyId_should_throw_noResultException() {
+        //GIVEN
+        Long surveyId = 199L;
+
+        List<AnswerDTO> answerDTOS = List.of(new AnswerDTO(1L, 1));
+
+            //WHEN
+        assertThatThrownBy(() -> {
+            this.surveyService.storeAnswers(surveyId, answerDTOS);
+
+            //THEN
+        }).isInstanceOf(NoResultException.class);
+
+        verifyNoInteractions(this.ratingRepository);
+
+    }
+
+    @Test
+    void test_storeAnswers_with_known_surveyId_should_return_expected_surveyDTO() {
+        //GIVEN
+        Long surveyId = 199L;
+        long questionId = 1L;
+
+        when(this.questionRepository.findById(questionId))
+            .thenReturn(
+                Optional.of(new Question(questionId, "Test Question", null))
+            );
+        List<AnswerDTO> answerDTOS = List.of(new AnswerDTO(questionId, 1));
+
+        when(this.surveyRepository.findById(surveyId))
+            .thenReturn(
+                Optional.of(new Survey(surveyId, "Test Survey", null))
+            );
+
+        //WHEN
+        this.surveyService.storeAnswers(surveyId, answerDTOS);
+
+        //THEN
+        verify(this.ratingRepository, times(answerDTOS.size())).save(any());
+
     }
 
 }

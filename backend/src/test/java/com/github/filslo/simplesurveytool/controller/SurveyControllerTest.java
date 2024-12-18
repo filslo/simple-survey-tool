@@ -1,5 +1,6 @@
 package com.github.filslo.simplesurveytool.controller;
 import com.github.filslo.simplesurveytool.SimpleSurveyToolApplication;
+import com.github.filslo.simplesurveytool.dto.AnswerDTO;
 import com.github.filslo.simplesurveytool.dto.SurveyDTO;
 import com.github.filslo.simplesurveytool.service.SurveyService;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
@@ -13,14 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.*;
 
 import static io.restassured.http.ContentType.JSON;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
@@ -94,7 +95,6 @@ class SurveyControllerTest {
         // WHEN
         given().log().ifValidationFails()
             .accept(JSON)
-
             .when()
             .get("/api/surveys/{id}", surveyId)
             // THEN
@@ -126,6 +126,29 @@ class SurveyControllerTest {
             .statusCode(SC_NOT_FOUND);
 
         verify(this.surveyService).getSurvey(surveyId);
+    }
+
+    @Test
+    void should_return_NO_CONTENT_when_submitting_answer() {
+
+        //GIVEN
+        long surveyId = 10001L;
+
+
+        // WHEN
+        List<AnswerDTO> answers = List.of(new AnswerDTO());
+        given().log().ifValidationFails()
+            .accept(JSON)
+            .body(answers)
+            .contentType(MediaType.APPLICATION_JSON)
+
+            .when()
+            .post("/api/surveys/{id}/answers", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_NO_CONTENT);
+
+        verify(this.surveyService).storeAnswers(surveyId, answers);
     }
 
 }

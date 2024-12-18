@@ -1,3 +1,7 @@
+DELETE FROM RATING;
+DELETE FROM QUESTION;
+DELETE FROM SURVEY;
+
 insert into SURVEY (id, name) VALUES (10, 'Survey1');
 insert into SURVEY (id, name) VALUES (20, 'Survey2');
 

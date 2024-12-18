@@ -65,4 +65,25 @@ export default class APIService {
         }
     }
 
-}
+    submitAnswers(surveyId, answers) {
+        if (answers !== undefined) {
+            const url = `/surveys/${surveyId}/answers`;
+            return this.client.post(url, answers)
+                .then(response => {
+                    console.debug(`Fetching survey: ${surveyId}`);
+
+                    if (response.data) {
+                        return response.data;
+                    } else {
+                        console.warn(`Survey not found: ${surveyId}`);
+                        return undefined;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting answers:', error);
+                    return [];
+                });
+        }
+    }
+
+    }
