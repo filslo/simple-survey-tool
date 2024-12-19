@@ -1,13 +1,13 @@
 package com.github.filslo.simplesurveytool.data.repository;
 
-import com.github.filslo.simplesurveytool.data.entity.Rating;
+import com.github.filslo.simplesurveytool.data.entity.*;
 import org.springframework.data.repository.Repository;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface RatingRepository extends Repository<Rating, Long> {
 
     Rating save(Rating rating);
 
-    Optional<Rating> findById(long id);
+    List<Rating> findByQuestion(Question question);
 }

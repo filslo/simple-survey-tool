@@ -87,4 +87,25 @@ public class SurveyController {
         }
     }
 
+
+    @Operation(
+        summary = "Get survey results by Id"
+    )
+    @GetMapping("/{id}/results")
+    @ResponseStatus(HttpStatus.OK)
+    public SurveyResultsDTO getResults(
+        @PathVariable("id") Long surveyId
+    ) {
+
+        assert this.surveyService != null;
+        try {
+            return this.surveyService.getSurveyAnswers(surveyId);
+        } catch (NoResultException e) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Survey Not Found",e
+            );
+        }
+    }
+
 }

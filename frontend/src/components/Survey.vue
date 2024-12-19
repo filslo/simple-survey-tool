@@ -22,6 +22,11 @@
             <div class="success" v-if="savingSuccessful">
                 Answers successfully submitted
             </div>
+            <div v-if="savingSuccessful">
+                <router-link :to="{ name: 'surveyResults', params: { id: survey.id } }">
+                    View results
+                </router-link>
+            </div>
 
         </form>
 

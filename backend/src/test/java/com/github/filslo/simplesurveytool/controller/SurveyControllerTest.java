@@ -1,7 +1,8 @@
 package com.github.filslo.simplesurveytool.controller;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.filslo.simplesurveytool.SimpleSurveyToolApplication;
-import com.github.filslo.simplesurveytool.dto.AnswerDTO;
-import com.github.filslo.simplesurveytool.dto.SurveyDTO;
+import com.github.filslo.simplesurveytool.dto.*;
 import com.github.filslo.simplesurveytool.service.SurveyService;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import jakarta.persistence.NoResultException;
@@ -38,6 +39,9 @@ class SurveyControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private SurveyService surveyService;
@@ -149,6 +153,68 @@ class SurveyControllerTest {
             .statusCode(SC_NO_CONTENT);
 
         verify(this.surveyService).storeAnswers(surveyId, answers);
+    }
+
+    @Test
+    void test_get_survey_result_byid_when_survey_does_not_exist_with_status_NO_FOUND() {
+
+        //GIVEN
+        long surveyId = 10002L;
+
+        when(this.surveyService.getSurveyAnswers(surveyId)).thenThrow(NoResultException.class);
+
+        // WHEN
+        given().log().ifValidationFails()
+            .accept(JSON)
+
+            .when()
+            .get("/api/surveys/{id}/results", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_NOT_FOUND);
+
+        verify(this.surveyService).getSurveyAnswers(surveyId);
+    }
+
+
+    @Test
+    void test_get_surveyresult_byid_returns_existing_survey_result_from_service_with_status_OK() throws JsonProcessingException {
+
+        //GIVEN
+        long surveyId = 100L;
+        String surveyName = "Survey1";
+        List<QuestionResultsDTO> questionResultDTOs = List.of(
+            new QuestionResultsDTO(
+                5L,
+                "Question1",
+                List.of(new AnswerResultsDTO(5, 1)))
+        );
+
+        SurveyResultsDTO surveyResultsDTO = new SurveyResultsDTO(
+            surveyId,
+            surveyName,
+            questionResultDTOs
+        );
+
+        when(this.surveyService.getSurveyAnswers(surveyId)).thenReturn(surveyResultsDTO);
+
+        // WHEN
+        SurveyResultsDTO actualSurveyResultsDTO = given().log().ifValidationFails()
+            .accept(JSON)
+            .when()
+            .get("/api/surveys/{id}/results", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_OK)
+            .body("surveyId", equalTo(100))
+            .body("surveyName", equalTo(surveyName))
+            .extract()
+            .as(SurveyResultsDTO.class);
+        ;
+
+        verify(this.surveyService).getSurveyAnswers(surveyId);
+
+        assertThat(actualSurveyResultsDTO).isEqualTo(surveyResultsDTO);
     }
 
 }

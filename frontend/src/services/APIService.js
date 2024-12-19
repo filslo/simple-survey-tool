@@ -86,4 +86,26 @@ export default class APIService {
         }
     }
 
+    fetchSurveyResults(surveyId) {
+        if (surveyId !== undefined) {
+            const url = `/surveys/${surveyId}/results`;
+            return this.client.get(url)
+                .then(response => {
+                    console.debug(`Fetching survey results: ${surveyId}`);
+
+                    if (response.data) {
+                        return response.data;
+                    } else {
+                        console.warn(`Survey result not found: ${surveyId}`);
+                        return undefined;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Survey:', error);
+                    return [];
+                });
+        }
     }
+
+
+}

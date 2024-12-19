@@ -1,8 +1,9 @@
 package com.github.filslo.simplesurveytool.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.filslo.simplesurveytool.SimpleSurveyToolApplication;
-import com.github.filslo.simplesurveytool.dto.AnswerDTO;
-import com.github.filslo.simplesurveytool.dto.SurveyDTO;
+import com.github.filslo.simplesurveytool.data.repository.RatingRepository;
+import com.github.filslo.simplesurveytool.dto.*;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,9 +41,13 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 class SurveyControllerIT {
 
     private static final long SURVEY1_ID = 10L;
+    private static final String SURVEY1_NAME = "Survey1";
 
     private static final int SURVEY2_ID = 20;
     private static final String SURVEY2_NAME = "Survey2";
+
+    @Autowired
+    private RatingRepository ratingRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -162,5 +167,76 @@ class SurveyControllerIT {
             .statusCode(SC_NO_CONTENT);
 
     }
+
+    @Test
+    void test_get_survey_result_byid_when_survey_does_not_exist_with_status_NO_FOUND() {
+
+        //GIVEN
+        long surveyId = 10002L;
+
+        // WHEN
+        given().log().ifValidationFails()
+            .accept(JSON)
+
+            .when()
+            .get("/api/surveys/{id}/results", surveyId)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_NOT_FOUND);
+
+    }
+
+
+    @Test
+    void test_get_surveyresult_should_return_existing_survey_result_from_service_with_status_OK() throws JsonProcessingException {
+
+        //GIVEN
+        SurveyResultsDTO expectedSurveyResultsDTO = new SurveyResultsDTO(
+            10L,
+            SURVEY1_NAME,
+            List.of(
+                new QuestionResultsDTO(
+                    1L,
+                    "Question1",
+                    List.of(
+                        new AnswerResultsDTO(0, 0),
+                        new AnswerResultsDTO(1, 2),
+                        new AnswerResultsDTO(2, 0),
+                        new AnswerResultsDTO(3, 1),
+                        new AnswerResultsDTO(4, 0),
+                        new AnswerResultsDTO(5, 0)
+                    )
+                ),
+                new QuestionResultsDTO(
+                    2L,
+                    "Question2",
+                    List.of(
+                        new AnswerResultsDTO(0, 0),
+                        new AnswerResultsDTO(1, 0),
+                        new AnswerResultsDTO(2, 1),
+                        new AnswerResultsDTO(3, 0),
+                        new AnswerResultsDTO(4, 1),
+                        new AnswerResultsDTO(5, 0)
+                    )
+                )
+            )
+        );
+
+        // WHEN
+        SurveyResultsDTO actualSurveyResultsDTO = given().log().ifValidationFails()
+            .accept(JSON)
+            .when()
+            .get("/api/surveys/{id}/results", SURVEY1_ID)
+            // THEN
+            .then().log().ifError()
+            .statusCode(SC_OK)
+            .body("surveyId", equalTo(10))
+            .body("surveyName", equalTo(SURVEY1_NAME))
+            .extract()
+            .as(SurveyResultsDTO.class);
+
+        assertThat(actualSurveyResultsDTO).isEqualTo(expectedSurveyResultsDTO);
+    }
+
 
 }
